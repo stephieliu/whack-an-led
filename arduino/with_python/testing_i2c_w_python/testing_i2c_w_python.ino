@@ -102,6 +102,9 @@ volatile int count_hundred_ms = 0; //counts time in ms
 volatile int count_secs = 0; //counts time in s
 //int buttonPressed_time = 0;
 
+volatile int count_star_winks = 0; //counts whether star should wink (resets every 500ms)
+volatile bool starWink = false; //start the star animation in initial image
+
 //volatile interrupt/timing-related variables
 volatile int numPlayerClicks = 0; //number of clicks done by user throughout the game
 
@@ -219,6 +222,7 @@ void initTime(){
   //reset time counters
   count_hundred_ms = 0;
   count_secs = 0;
+  count_star_wink = 0;
   moleTime = MOLE_TIME;
   elapsedTurnTime = 0;
 }
@@ -284,6 +288,16 @@ ISR(TIMER1_OVF_vect) {
   if(playerTurn){
     playTime ++; //counts the player's turn duration TOTAL in hundred ms
   }
+
+  if(count_hundred_ms % 5 == 0){
+    count_star_wink++; //updates star img every 500ms (each count = star wink)
+    if(count_star_wink % 2 == 0){
+      starWink = false;
+    }
+    else{
+      starWink = true; //swap the blink status every other count
+    }
+  }
 }
 
 //interrupt function
@@ -301,12 +315,24 @@ void loop() {
     resetGame(); //run the reset function
   }
 
+  if(starWink){
+    //send the blinking command
+    Serial.println("STARWINK");
+    starWink = false; //reset so it doesn't update twice (i.e. if it also triggers inside the loop)
+  }
+
   //wait until the player presses the start button
   if((digitalRead(startButtonPin) == LOW) && !gameOn){
     //start the new game
     Serial.println("STARTGAME");
 
     gameOn = true; //game is currently going
+
+    if(starWink){
+      //send the blinking command
+      Serial.println("STARWINK");
+      starWink = false;//reset so it doesn't update twice (i.e. if it also triggers inside the nested loop)
+    }
 
     //blink the status led blue 3 times
     for (int i = 0; i<3; i++){
@@ -319,6 +345,12 @@ void loop() {
       while(count_secs < blinkTimeTmp + 1){
     	  digitalWrite(statusLED_G, HIGH);
       }
+
+      if(starWink){
+        //send the blinking command
+        Serial.println("STARWINK");
+        starWink = false;//reset so it doesn't update twice (i.e. if it also triggers inside the nested loop)
+      }
     }
     digitalWrite(statusLED_G, LOW); //turn off blue status indicator once the game really begins
 	
@@ -330,6 +362,12 @@ void loop() {
       if(endGame){
         Serial.println("ENDGAME");
         resetGame(); //run the reset function
+      }
+
+      if(starWink){
+        //send the blinking command
+        Serial.println("STARWINK");
+        starWink = false;//reset so it doesn't update twice (i.e. if it also triggers inside the nested loop)
       }
   //    playRound();
       if(elapsedTurnTime >= moleTime && !playerTurn && !endGame){
@@ -356,6 +394,12 @@ void loop() {
         bool hitSuccess = false; //to track whether the player successfully hit the mole this time
 
         while(elapsedTurnTime <= moleTime){
+          if(starWink){
+            //send the blinking command
+            Serial.println("STARWINK");
+            starWink = false;//reset so it doesn't update twice (i.e. if it also triggers inside the nested loop)
+          }
+
           Serial.println("PLAYERTURNSTART");
           //check for user input to the correct button
           if(digitalRead(holeButtons[randLEDSelector]) == LOW && !hitSuccess){
