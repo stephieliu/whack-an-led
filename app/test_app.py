@@ -584,7 +584,7 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
             logger.debug('Restarted the background music.')
         
         #check the star counter status (should wink it every second)
-        if STARWINK:
+        if not STARWINK:
             STAR1 = Image.open(star1_path) #initial icon
             STAR1 = STAR1.resize((50, 50))
             self.star_1 = ImageTk.PhotoImage(STAR1)
