@@ -340,7 +340,7 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
     def __init__(self):
         super().__init__()
         self.title('Whack an LED!')
-        self.geometry('800x600') #set initial size of the display window
+        self.geometry('850x600') #set initial size of the display window
         self._cells = {} #dictionary for mapping cells to row/col on grid
 
         self.dynamicLabelsList = [
@@ -378,25 +378,26 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
     def createUserDisplay(self):
         display_frame = tk.Frame(master=self)
         display_frame.pack(fill=tk.X) #place frame object on main window's top border --> ensure frame will fill entire width on resize
+        # display_frame['style'] = self.style
 
         self.titleLabel = tk.Label(
             master=display_frame,
             text = 'Whack an LED!',
-            font = font.Font(size=28, weight='bold'),
+            font = font.Font(size=28, weight='bold', family='Courier'),
         ) #title label
         self.titleLabel.pack(pady=(30, 20)) #add to main window
 
         self.startLabel = tk.Label(
             master=display_frame,
             text = 'Press the blue button to start the game!',
-            font = font.Font(size=20, weight='normal'),
+            font = font.Font(size=20, weight='normal', family='Courier'),
         ) #intro label
         self.startLabel.pack() #add to main window
 
         self.statsStartLabel = tk.Label(
             master=display_frame,
             text = 'Stats Report',
-            font = font.Font(size=16, weight='bold'),
+            font = font.Font(size=16, weight='bold', family='Courier'),
         ) #stats title label
         self.statsStartLabel.pack(pady=(50, 20)) #add to main window
     
@@ -412,7 +413,7 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
         self.current_title = tk.Label(
             master=title_frame,
             text='Current Round Stats',
-            font=font.Font(size=12, weight='bold'),
+            font=font.Font(size=12, weight='bold', family='Courier'),
             width=30,
         )
         self.current_title.grid(row=0, column=0, columnspan=2, sticky='w', pady=(0, 5), padx=(0, 10))
@@ -421,7 +422,7 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
         self.current_title1 = tk.Label(
             master=title_frame,
             text='Best Round Stats',
-            font=font.Font(size=12, weight='bold'),
+            font=font.Font(size=12, weight='bold', family='Courier'),
             width=30,
         )
         self.current_title1.grid(row=0, column=2, columnspan=2, sticky='e', pady=(0, 5), padx=(20, 0))
@@ -445,6 +446,7 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
             statLabelSpace = tk.Label(
                 master=grid_frame,
                 text=current_labels[row],
+                font=font.Font(size=10, family='Courier'),
                 fg='black',
                 width = 30,
                 # height = 2,
@@ -471,6 +473,7 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
                 master=grid_frame,
                 textvariable=self.current_vars[row],
                 fg='black',
+                font=font.Font(size=10, family='Courier'),
                 width = 10,
                 # height = 2,
                 highlightbackground='lightblue',
@@ -502,6 +505,7 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
                 master=grid_frame,
                 text=labelslist[row],
                 fg='black',
+                font=font.Font(size=10, family='Courier'),
                 width = 45,
                 # height = 2,
                 highlightbackground='lightblue',
@@ -527,6 +531,7 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
                 master=grid_frame,
                 textvariable=self.dynamicLabelsList[row],
                 fg='black',
+                font=font.Font(size=10, family='Courier'),
                 width = 3,
                 # height = 2,
                 highlightbackground='lightblue',
@@ -541,6 +546,8 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
             )
 
     def _poll_ui(self):
+        global CURR_SCORE, CURR_CLICKS, CURR_PLAYTIME, CURR_REACT_TIME, CURR_MOLE_INT, CURR_FAIL_CNT
+
         #check that background music is still playing
         if not self.backgroundMusic.is_alive():
             self.backgroundMusic = playsound(background_music_path, block=False)
@@ -555,7 +562,7 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
                 #update current running game vars
                 self.current_vars[0].set(str(CURR_SCORE))
                 self.current_vars[1].set(str(CURR_PLAYTIME))
-                self.current_vars[2].set('-' if SHORTEST_MOLE_INT is None else str(SHORTEST_MOLE_INT))
+                self.current_vars[2].set('-' if CURR_MOLE_INT is None else str(CURR_MOLE_INT))
                 self.current_vars[3].set(str(CURR_FAIL_CNT)+' / 3')
                 self.current_vars[4].set(str(CURR_CLICKS))
                 if CURR_REACT_TIME is None:
@@ -588,6 +595,13 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
                     '-', #total clicks
                     '-', #avg react time
                 ]
+
+                CURR_SCORE = 0
+                CURR_CLICKS = 0
+                CURR_PLAYTIME = 0
+                CURR_REACT_TIME = 0
+                CURR_MOLE_INT = 0
+                CURR_FAIL_CNT = 0
 
                 for i in range(len(reset_curr_vars)):
                     self.current_vars[i].set(reset_curr_vars[i])
