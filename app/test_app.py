@@ -118,6 +118,10 @@ CURR_REACT_TIME = 0
 CURR_MOLE_INT = 0
 CURR_FAIL_CNT = 0
 
+STARWINK = False #will update every 1000ms to "wink" the star icon
+#if false, displays star1
+#if true, displays star2
+
 #initialize sound file directories
 background_music_path = 'sounds/djartmusic-best-game-console-301284.mp3'
 startgame_music_path = 'sounds/freesound_community-game-start-6104.mp3'
@@ -126,9 +130,10 @@ fail_music_path = 'sounds/universfield-retro-game-shot-2-152053.mp3'
 
 #initialize images and resize for the ui display
 star1_path = 'graphics/star_1.png'
+star2_path = 'graphics/star_2.png'
 #read image and resize to fit 50x50
-star1 = Image.open(star1_path)
-star1 = star1.resize((50, 50))
+STAR1 = Image.open(star1_path) #initial icon
+STAR1 = STAR1.resize((50, 50))
 
 #set up the serial port to be read
 ser = serial.Serial('COM4', 115200, timeout=2)
@@ -171,6 +176,7 @@ class ThreadedSerialReader:
             'CURRFAILCNT',
             'EXCEEDFAIL',
             'PLAYERTURNEND',
+            'STARWINK',
         ]
 
         self.data_queue = queue.Queue(maxsize=queue_size)
@@ -234,7 +240,7 @@ class ThreadedSerialReader:
         commandName = data.split(' ')[0] #this separates the actual command from the data value if it exists (eg. PLAYERSCORE [playerscore])
 
         #set global vars
-        global HIT_FAIL, NEW_MOLE, BEST_REACT_TIME, BEST_SCORE, SHORTEST_MOLE_INT, FAIL_THRESHOLD, HIT_SUCCESS, TOTAL_CLICKS, LONGEST_PLAYTIME, GAME_ON
+        global HIT_FAIL, NEW_MOLE, BEST_REACT_TIME, BEST_SCORE, SHORTEST_MOLE_INT, FAIL_THRESHOLD, HIT_SUCCESS, TOTAL_CLICKS, LONGEST_PLAYTIME, GAME_ON, STARWINK
 
         #also global vars for current stats
         global CURR_SCORE, CURR_CLICKS, CURR_PLAYTIME, CURR_REACT_TIME, CURR_MOLE_INT, CURR_FAIL_CNT
@@ -341,6 +347,9 @@ class ThreadedSerialReader:
                 logger.debug('Fail counter hit.')
             elif 'PLAYERTURNEND' in commandName:
                 logger.debug('Player turn over.')
+            elif 'STARWINK' in commandName:
+                logger.debug('wink the star icon.')
+                STARWINK = not STARWINK #toggles the icon back and forth
 
 #class for the main app frame
 class userDisplay(tk.Tk): #inherit Tk --> full gui window
@@ -410,7 +419,7 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
     
     def createUserStats(self):
         #global variables
-        global FAIL_THRESHOLD, GAME_ON, star1
+        global FAIL_THRESHOLD, GAME_ON, STAR1
 
         #create labels for displaying the user's statistics
         title_frame = tk.Frame(master=self)
@@ -426,7 +435,7 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
         self.current_title.grid(row=0, column=0, columnspan=2, sticky='w', pady=(0, 5), padx=(0, 10))
 
         #added a star icon
-        self.star_1 = ImageTk.PhotoImage(star1)
+        self.star_1 = ImageTk.PhotoImage(STAR1)
         self.starIcon = tk.Canvas(
             master=title_frame,
             width=50,
@@ -566,13 +575,29 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
     #executes every 50ms
     #purpose is to poll any changes in the game variables (from the continuously threading background serial monitor updates) and update the ui accordingly
     def _poll_ui(self):
-        global CURR_SCORE, CURR_CLICKS, CURR_PLAYTIME, CURR_REACT_TIME, CURR_MOLE_INT, CURR_FAIL_CNT
+        global CURR_SCORE, CURR_CLICKS, CURR_PLAYTIME, CURR_REACT_TIME, CURR_MOLE_INT, CURR_FAIL_CNT, STAR1, STARWINK
 
         #check that background music is still playing
         if not self.backgroundMusic.is_alive():
             self.backgroundMusic = playsound(background_music_path, block=False)
             #restart the music
             logger.debug('Restarted the background music.')
+        
+        #check the star counter status (should wink it every second)
+        if STARWINK:
+            STAR1 = Image.open(star1_path) #initial icon
+            STAR1 = STAR1.resize((50, 50))
+            self.star_1 = ImageTk.PhotoImage(STAR1)
+            # Add the background image to the canvas
+            self.starIcon.create_image(0, 0, anchor='nw', image=self.star_1)
+            self.starIcon.grid(row=0, column=2, columnspan=1, sticky='nw', pady=(0, 5), padx=(20, 0))
+        else:
+            STAR1 = Image.open(star2_path) #winking icon
+            STAR1 = STAR1.resize((50, 50))
+            self.star_1 = ImageTk.PhotoImage(STAR1)
+            # Add the background image to the canvas
+            self.starIcon.create_image(0, 0, anchor='nw', image=self.star_1)
+            self.starIcon.grid(row=0, column=2, columnspan=1, sticky='nw', pady=(0, 5), padx=(20, 0))
 
         #read global vals and update ui
         try:
