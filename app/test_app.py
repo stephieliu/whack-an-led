@@ -72,6 +72,7 @@ from tkinter import *
 from tkinter import ttk, font
 
 from playsound3 import playsound
+from PIL import Image, ImageTk
 
 #setup the debug logger
 #create logger
@@ -122,6 +123,12 @@ background_music_path = 'sounds/djartmusic-best-game-console-301284.mp3'
 startgame_music_path = 'sounds/freesound_community-game-start-6104.mp3'
 success_music_path = 'sounds/freesound_community-retro-video-game-coin-pickup-38299.mp3'
 fail_music_path = 'sounds/universfield-retro-game-shot-2-152053.mp3'
+
+#initialize images and resize for the ui display
+star1_path = 'graphics/star_1.png'
+#read image and resize to fit 50x50
+star1 = Image.open(star1_path)
+star1 = star1.resize((50, 50))
 
 #set up the serial port to be read
 ser = serial.Serial('COM4', 115200, timeout=2)
@@ -403,7 +410,7 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
     
     def createUserStats(self):
         #global variables
-        global FAIL_THRESHOLD, GAME_ON
+        global FAIL_THRESHOLD, GAME_ON, star1
 
         #create labels for displaying the user's statistics
         title_frame = tk.Frame(master=self)
@@ -418,6 +425,17 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
         )
         self.current_title.grid(row=0, column=0, columnspan=2, sticky='w', pady=(0, 5), padx=(0, 10))
 
+        #added a star icon
+        self.star_1 = ImageTk.PhotoImage(star1)
+        self.starIcon = tk.Canvas(
+            master=title_frame,
+            width=50,
+            height=50,
+        )
+        # Add the background image to the canvas
+        self.starIcon.create_image(0, 0, anchor='nw', image=self.star_1)
+        self.starIcon.grid(row=0, column=2, columnspan=1, sticky='nw', pady=(0, 5), padx=(20, 0))
+
         #labels for best scores
         self.current_title1 = tk.Label(
             master=title_frame,
@@ -425,7 +443,7 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
             font=font.Font(size=12, weight='bold', family='Courier'),
             width=30,
         )
-        self.current_title1.grid(row=0, column=2, columnspan=2, sticky='e', pady=(0, 5), padx=(20, 0))
+        self.current_title1.grid(row=0, column=3, columnspan=2, sticky='e', pady=(0, 5), padx=(20, 0))
 
         #create labels for displaying the user's statistics
         grid_frame = tk.Frame(master=self)
@@ -545,6 +563,8 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
                 sticky='nsw',
             )
 
+    #executes every 50ms
+    #purpose is to poll any changes in the game variables (from the continuously threading background serial monitor updates) and update the ui accordingly
     def _poll_ui(self):
         global CURR_SCORE, CURR_CLICKS, CURR_PLAYTIME, CURR_REACT_TIME, CURR_MOLE_INT, CURR_FAIL_CNT
 
