@@ -98,7 +98,8 @@ byte holeLED [4] = {hole1LEDPin, hole2LEDPin, hole3LEDPin, hole4LEDPin};
 //--------------------------------------------------------
 //timing events
 //--------------------------------------------------------
-volatile uint32_t count_hundred_ms = 0; //counts time in ms
+volatile uint32_t count_ms = 0; //counts time in ms
+volatile uint32_t count_hundred_ms = 0; //counts time in 100 ms
 volatile uint32_t count_secs = 0; //counts time in s
 //int buttonPressed_time = 0;
 
@@ -148,11 +149,11 @@ void setup() {
 
   //this is the timer/counter register, holding the timer's value in counts
   //for timer1, there are 16 bits --> can hold up to 2^16 = 65535
-  TCNT1 = 40535;//preload timer to 40535
+  TCNT1 = 63035;//preload timer to 40535
     //the purpose of doing the timer preload is so that there will be a defined number of counts until overflow for each clock cycle --> 65535 - 40535 = 25000 'ticks'
     //the arduino frequency is 16MHz = 1 tick every 62.5us
     //but because of the prescaler, the new frequency is 0.25MHz = 1 tick every 4000ns = 4 us
-    //so with this preload, 25000 * 4us = 100000 us = 100ms --> approx. 100 ms per clock cycle
+    //so with this preload, 2500 * 4us = 10000 us = 10ms --> approx. 10 ms per clock cycle
 
   //enable timer overflow interrupt
   TIMSK1 |= B00000001; //the timsk register bit 0 is TOIE1
@@ -263,7 +264,7 @@ void resetGame(){
   
   //report the total play time (player's turn duration) in ms
   Serial.print("TOTALPLAYTIME ");
-  Serial.print(playTime*100);
+  Serial.print(playTime*10);
   Serial.println();
 
   //report the time interval reached (player's turn duration) in ms
@@ -273,7 +274,7 @@ void resetGame(){
 
   //calculate average reaction time
   if(playerScore > 0){
-	  avgReactionTime = (playTime*100)/playerScore;
+	  avgReactionTime = (playTime*10)/playerScore;
   }
   
   Serial.print("AVGREACTTIME ");
@@ -289,18 +290,22 @@ void resetGame(){
 
 //special interrupt function ISR: for tracking timer variables
 ISR(TIMER1_OVF_vect) {
-  TCNT1 = 40535; //preload timer
-  //handle 100ms timer interrupt
-  count_hundred_ms++; //this will increment every 100ms
+  TCNT1 = 63035; //preload timer
 
-  elapsedTurnTime++; //increments every 100ms
+  count_ms++; //increment every 10ms
+
+  //handle 100ms timer interrupt
+  if(count_ms % 10 == 0){
+    count_hundred_ms++; //this will increment every 100ms
+    elapsedTurnTime++; //increments every 100ms
+  }
 
   if (count_hundred_ms % 10 == 0) {
     count_secs++; //this variable counts time in seconds
   }
   
   if(playerTurn){
-    playTime ++; //counts the player's turn duration TOTAL in hundred ms
+    playTime ++; //counts the player's turn duration TOTAL in ms
   }
 
   if(count_hundred_ms % 5 == 0){
@@ -317,8 +322,8 @@ ISR(TIMER1_OVF_vect) {
 //interrupt function
 //this will keep a counter of the total clicks done by the user
 void clickCounter(){
-  uint32_t curr_ticks = count_hundred_ms;
-  if(playerTurn && ((lastTimeInterrupted==0) || (curr_ticks - lastTimeInterrupted >= 2))){
+  uint32_t curr_ticks = count_ms;
+  if(playerTurn && ((lastTimeInterrupted==0) || (curr_ticks - lastTimeInterrupted >= 70))){
     lastTimeInterrupted = curr_ticks;
     numPlayerClicks++;
   }

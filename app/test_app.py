@@ -146,7 +146,7 @@ ARCADE_NEON_YELLOW = "#f9c80e"
 ARCADE_TEXT = "#f2f2f2"
 
 #set up the serial port to be read
-ser = serial.Serial('COM4', 115200, timeout=2)
+ser = serial.Serial('COM5', 115200, timeout=2)
 time.sleep(0.2) #wait for port to be opened
 
 #playerRoundStats class will hold variables for the current round
@@ -281,7 +281,7 @@ class ThreadedSerialReader:
                 # CURR_CLICKS = val
 
                 #also update total clicks
-                TOTAL_CLICKS += val
+                TOTAL_CLICKS = val
                 logger.debug(f'Updated clicks count: {TOTAL_CLICKS}')
             elif 'TOTALPLAYTIME' in commandName:
                 val = int(data.split(' ')[1]) / 1000 #get the numerical value after (this is the string) in secs
@@ -631,7 +631,7 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
     #executes every 50ms
     #purpose is to poll any changes in the game variables (from the continuously threading background serial monitor updates) and update the ui accordingly
     def _poll_ui(self):
-        global CURR_SCORE, CURR_MOLE_INT, CURR_FAIL_CNT, STAR1, STARWINK, BEST_REACT_TIME, BEST_SCORE, LONGEST_PLAYTIME, SHORTEST_MOLE_INT, TOTAL_CLICKS
+        global CURR_SCORE, CURR_MOLE_INT, CURR_FAIL_CNT, STAR1, STARWINK, BEST_REACT_TIME, BEST_SCORE, LONGEST_PLAYTIME, SHORTEST_MOLE_INT, TOTAL_CLICKS, FIRST_ROUND
 
         #check that background music is still playing
         if not self.backgroundMusic.is_alive():
@@ -703,6 +703,9 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
             else:
                 logger.debug('Update best stats variables.')
                 #update ending game vars
+                if not CURR_FAIL_CNT == 0:
+                    self.current_vars[2].set('3 / 3')
+
                 self.dynamicLabelsList[0].set(str(BEST_SCORE))
                 self.dynamicLabelsList[1].set(str(LONGEST_PLAYTIME))
                 self.dynamicLabelsList[2].set('-' if SHORTEST_MOLE_INT is None else str(SHORTEST_MOLE_INT))
@@ -710,7 +713,7 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
                 if BEST_REACT_TIME is None:
                     self.dynamicLabelsList[3].set('-')
                 else:
-                    self.dynamicLabelsList[3].set(f'{BEST_REACT_TIME:.2f}')
+                    self.dynamicLabelsList[3].set(f'{BEST_REACT_TIME:.1f}')
 
                 self.dynamicLabelsList[4].set(str(TOTAL_CLICKS))
 
