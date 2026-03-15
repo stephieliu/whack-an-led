@@ -135,8 +135,17 @@ star2_path = 'graphics/star_2.png'
 STAR1 = Image.open(star1_path) #initial icon
 STAR1 = STAR1.resize((50, 50))
 
+#for styling, retro theme
+ARCADE_BG = "#0d0221"
+ARCADE_PANEL = "#1d1135"
+ARCADE_NEON_PURPLE = "#9000ff"
+ARCADE_NEON_BLUE = "#00eaff"
+ARCADE_NEON_PINK = "#ff0080"
+ARCADE_NEON_YELLOW = "#f9c80e"
+ARCADE_TEXT = "#f2f2f2"
+
 #set up the serial port to be read
-ser = serial.Serial('COM5', 115200, timeout=2)
+ser = serial.Serial('COM4', 115200, timeout=2)
 time.sleep(0.2) #wait for port to be opened
 
 #playerRoundStats class will hold variables for the current round
@@ -356,7 +365,7 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
     def __init__(self):
         super().__init__()
         self.title('Whack an LED!')
-        self.geometry('850x600') #set initial size of the display window
+        self.geometry('850x530') #set initial size of the display window
         self._cells = {} #dictionary for mapping cells to row/col on grid
 
         self.dynamicLabelsList = [
@@ -366,6 +375,8 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
             tk.StringVar(value='-'),
             tk.StringVar(value='-'),
         ]
+
+        self.configure(bg=ARCADE_BG)
 
         #vars for current round
         self.current_vars = [
@@ -392,71 +403,105 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
         self.after(50, self._poll_ui) #polls updates every 50 ms
 
     def createUserDisplay(self):
-        display_frame = tk.Frame(master=self)
+        #fonts for styling
+        self.arcadeTitleFont = font.Font(family="Courier", size=32, weight="bold")
+        self.arcadeSubtitleFont = font.Font(family="Courier", size=18, weight="bold")
+        self.arcadeLabelFont = font.Font(family="Courier", size=14)
+        self.arcadeSmallFont = font.Font(family="Courier", size=12)
+        display_frame = tk.Frame(
+            master=self,
+            bg=ARCADE_BG,
+            highlightbackground=ARCADE_NEON_PINK,
+            highlightthickness=4,
+        )
         display_frame.pack(fill=tk.X) #place frame object on main window's top border --> ensure frame will fill entire width on resize
         # display_frame['style'] = self.style
 
         self.titleLabel = tk.Label(
             master=display_frame,
             text = 'Whack an LED!',
-            font = font.Font(size=28, weight='bold', family='Courier'),
+            font = self.arcadeTitleFont,
+            fg=ARCADE_NEON_YELLOW,
+            bg=ARCADE_BG,
         ) #title label
-        self.titleLabel.pack(pady=(30, 20)) #add to main window
+        self.titleLabel.pack(pady=(20, 10)) #add to main window
 
         self.startLabel = tk.Label(
             master=display_frame,
             text = 'Press the blue button to start the game!',
-            font = font.Font(size=20, weight='normal', family='Courier'),
+            font = self.arcadeSubtitleFont,
+            fg=ARCADE_NEON_BLUE,
+            bg=ARCADE_BG,
         ) #intro label
-        self.startLabel.pack() #add to main window
+        self.startLabel.pack(pady=(5, 10)) #add to main window
 
         self.statsStartLabel = tk.Label(
             master=display_frame,
-            text = 'Stats Report',
-            font = font.Font(size=16, weight='bold', family='Courier'),
+            text = '->  Stats Report  <-',
+            font = self.arcadeSubtitleFont,
+            fg=ARCADE_NEON_PINK,
+            bg=ARCADE_BG,
         ) #stats title label
-        self.statsStartLabel.pack(pady=(50, 20)) #add to main window
+        self.statsStartLabel.pack(pady=(15, 15)) #add to main window
     
     def createUserStats(self):
         #global variables
         global FAIL_THRESHOLD, GAME_ON, STAR1
 
         #create labels for displaying the user's statistics
-        title_frame = tk.Frame(master=self)
-        title_frame.pack()
+        title_frame = tk.Frame(
+            master=self,
+            # width=self.winfo_width(),
+            bg = ARCADE_PANEL,
+            highlightbackground=ARCADE_NEON_PURPLE,
+            highlightthickness=4,
+        )
+        title_frame.pack(fill=tk.X, pady=20)
 
         #labels for current round
         self.current_title = tk.Label(
             master=title_frame,
-            text='Current Round Stats',
-            font=font.Font(size=12, weight='bold', family='Courier'),
-            width=30,
+            text='CURRENT STATS',
+            font=self.arcadeLabelFont,
+
+            fg=ARCADE_NEON_YELLOW,
+            bg=ARCADE_PANEL,
+            # width=30,
         )
-        self.current_title.grid(row=0, column=0, columnspan=2, sticky='w', pady=(0, 5), padx=(0, 10))
+        self.current_title.grid(row=0, column=0, sticky='e', pady=10, padx=20)
 
         #added a star icon
         self.star_1 = ImageTk.PhotoImage(STAR1)
-        self.starIcon = tk.Canvas(
+        self.starIcon = tk.Label(
             master=title_frame,
-            width=50,
-            height=50,
+            image=self.star_1,
+            bg=ARCADE_PANEL,
+            # width=50,
+            # height=50,
         )
         # Add the background image to the canvas
-        self.starIcon.create_image(0, 0, anchor='nw', image=self.star_1)
-        self.starIcon.grid(row=0, column=2, columnspan=1, sticky='nw', pady=(0, 5), padx=(20, 0))
+        # self.starIcon.create_image(0, 0, anchor='nw', image=self.star_1)
+        self.starIcon.grid(row=0, column=2, sticky='w', padx=20, pady=10)
 
         #labels for best scores
         self.current_title1 = tk.Label(
             master=title_frame,
-            text='Best Round Stats',
-            font=font.Font(size=12, weight='bold', family='Courier'),
-            width=30,
+            text='BEST STATS',
+            font=self.arcadeLabelFont,
+            fg=ARCADE_NEON_YELLOW,
+            bg=ARCADE_PANEL,
+            # width=30,
         )
-        self.current_title1.grid(row=0, column=3, columnspan=2, sticky='e', pady=(0, 5), padx=(20, 0))
+        self.current_title1.grid(row=0, column=3, sticky='e', pady=10, padx=20)
 
         #create labels for displaying the user's statistics
-        grid_frame = tk.Frame(master=self)
-        grid_frame.pack()
+    #     grid_frame = tk.Frame(
+    #         master=self,                  
+    #         bg=ARCADE_PANEL,
+    #         highlightbackground=ARCADE_NEON_BLUE,
+    #         highlightthickness=4,
+    #    )
+    #     grid_frame.pack(pady=20)
 
         current_labels = [
             'CURRENT SCORE:',
@@ -467,25 +512,24 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
             # 'AVERAGE REACTION TIME (ms):',
         ]
 
-        for row in range(len(current_labels)):
-            self.rowconfigure(row, weight=1, minsize=400)
-            self.columnconfigure(row, weight=1, minsize=100)
+        for i, label in enumerate(current_labels):
             statLabelSpace = tk.Label(
-                master=grid_frame,
-                text=current_labels[row],
-                font=font.Font(size=10, family='Courier'),
-                fg='black',
-                width = 30,
+                master=title_frame,
+                text=label,
+                font=self.arcadeSmallFont,
+                fg=ARCADE_TEXT,
+                bg=ARCADE_PANEL,
+                # width = 30,
                 # height = 2,
-                highlightbackground='lightblue',
+                # highlightbackground='lightblue',
             )
-            self._cells[statLabelSpace] = (row+1, 0)
+            # self._cells[statLabelSpace] = (row+1, 0)
             statLabelSpace.grid(
-                row=row+1,
+                row=i+1,
                 column=0,
-                padx=5,
-                pady=10,
-                sticky='nsew',
+                padx=10,
+                pady=8,
+                sticky='e',
             )
 
             global CURR_FAIL_CNT, CURR_SCORE, CURR_MOLE_INT
@@ -499,53 +543,55 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
             # self.current_vars[5].set(CURR_REACT_TIME)
 
             statLabelSpace = tk.Label(
-                master=grid_frame,
-                textvariable=self.current_vars[row],
-                fg='black',
-                font=font.Font(size=10, family='Courier'),
-                width = 10,
+                master=title_frame,
+                textvariable=self.current_vars[i],
+                fg=ARCADE_NEON_PURPLE,
+                font=self.arcadeSmallFont,
+                bg=ARCADE_PANEL,
+                # width = 10,
                 # height = 2,
-                highlightbackground='lightblue',
+                # highlightbackground='lightblue',
             )
-            self._cells[statLabelSpace] = (row+1, 0)
+            # self._cells[statLabelSpace] = (row+1, 0)
             statLabelSpace.grid(
-                row=row+1,
+                row=i+1,
                 column=1,
-                padx=5,
-                pady=10,
-                sticky='nsw',
+                padx=10,
+                pady=8,
+                sticky='w',
             )
-            logger.debug(f'currlabel row {row}')
+            logger.debug(f'currlabel row {i}')
 
         #best scores
         labelslist = [
             'BEST SCORE:',
             'LONGEST PLAYTIME (s):',
-            'SHORTEST LED TIME INTERVAL REACHED (ms):',
+            'SHORTEST TIME INTERVAL (ms):',
             'BEST REACTION TIME (ms):',
             'TOTAL CLICKS RECORDED:',
         ]
 
-        for row in range(len(labelslist)):
-            logger.debug(f'best scores row {row}')
-            self.rowconfigure(row, weight=1, minsize=400)
-            self.columnconfigure(row, weight=1, minsize=100)
+        for i, label in enumerate(labelslist):
+            logger.debug(f'best scores row {label}')
+            self.rowconfigure(i, weight=1, minsize=400)
+            self.columnconfigure(i, weight=1, minsize=100)
             statLabelSpace = tk.Label(
-                master=grid_frame,
-                text=labelslist[row],
-                fg='black',
-                font=font.Font(size=10, family='Courier'),
-                width = 45,
+                master=title_frame,
+                text=label,
+                fg=ARCADE_TEXT,
+                bg=ARCADE_PANEL,
+                font=self.arcadeSmallFont,
+                # width = 45,
                 # height = 2,
-                highlightbackground='lightblue',
+                # highlightbackground='lightblue',
             )
-            self._cells[statLabelSpace] = (row+1, 0)
+            # self._cells[statLabelSpace] = (row+1, 0)
             statLabelSpace.grid(
-                row=row+1,
+                row=i+1,
                 column=3,
-                padx=5,
-                pady=10,
-                sticky='nsew',
+                padx=10,
+                pady=8,
+                sticky='e',
             )
 
             #dynamic variables to be updated w/ the actual score counters
@@ -558,21 +604,22 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
             self.dynamicLabelsList[4].set(TOTAL_CLICKS)
 
             statLabelSpace = tk.Label(
-                master=grid_frame,
-                textvariable=self.dynamicLabelsList[row],
-                fg='black',
-                font=font.Font(size=10, family='Courier'),
-                width = 10,
+                master=title_frame,
+                textvariable=self.dynamicLabelsList[i],
+                fg=ARCADE_NEON_PURPLE,
+                bg=ARCADE_PANEL,
+                font=self.arcadeSmallFont,
+                # width = 10,
                 # height = 2,
-                highlightbackground='lightblue',
+                # highlightbackground='lightblue',
             )
-            self._cells[statLabelSpace] = (row+1, 0)
+            # self._cells[statLabelSpace] = (row+1, 0)
             statLabelSpace.grid(
-                row=row+1,
+                row=i+1,
                 column=4,
-                padx=5,
-                pady=10,
-                sticky='nsw',
+                padx=10,
+                pady=8,
+                sticky='w',
             )
 
     #executes every 50ms
@@ -592,15 +639,16 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
             STAR1 = STAR1.resize((50, 50))
             self.star_1 = ImageTk.PhotoImage(STAR1)
             # Add the background image to the canvas
-            self.starIcon.create_image(0, 0, anchor='nw', image=self.star_1)
-            self.starIcon.grid(row=0, column=2, columnspan=1, sticky='nw', pady=(0, 5), padx=(20, 0))
+            self.starIcon.config(image=self.star_1)
+            # self.starIcon.grid(row=0, column=2, columnspan=1, sticky='nw', pady=(0, 5), padx=(20, 0))
         else:
             STAR1 = Image.open(star2_path) #winking icon
             STAR1 = STAR1.resize((50, 50))
             self.star_1 = ImageTk.PhotoImage(STAR1)
             # Add the background image to the canvas
-            self.starIcon.create_image(0, 0, anchor='nw', image=self.star_1)
-            self.starIcon.grid(row=0, column=2, columnspan=1, sticky='nw', pady=(0, 5), padx=(20, 0))
+            self.starIcon.config(image=self.star_1)
+            # self.starIcon.create_image(0, 0, anchor='nw', image=self.star_1)
+            # self.starIcon.grid(row=0, column=2, columnspan=1, sticky='nw', pady=(0, 5), padx=(20, 0))
 
         #read global vals and update ui
         try:
