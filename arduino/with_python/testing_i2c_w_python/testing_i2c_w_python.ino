@@ -108,6 +108,7 @@ volatile bool starWink = false; //start the star animation in initial image
 
 //volatile interrupt/timing-related variables
 volatile uint32_t numPlayerClicks = 0; //number of clicks done by user throughout the game
+volatile uint32_t currNumPlayerClicks = 0; //number of clicks done by user throughout the current round
 volatile uint32_t lastTimeInterrupted = 0;
 
 //boolean flags to control the game status (start/end game)
@@ -220,6 +221,7 @@ void initGame(){
   avgReactionTime = 0;
 
   // numPlayerClicks = 0;
+  currNumPlayerClicks = 0; //reset the current click counter
   lastTimeInterrupted = 0;
 }
 
@@ -326,6 +328,7 @@ void clickCounter(){
   if(playerTurn && ((lastTimeInterrupted==0) || (curr_ticks - lastTimeInterrupted >= 70))){
     lastTimeInterrupted = curr_ticks;
     numPlayerClicks++;
+    currNumPlayerClicks++;
   }
 }
 
@@ -459,9 +462,24 @@ void loop() {
            	Serial.print("CURRTIMEINT ");
             Serial.print(moleTime);
             Serial.println();
+
+            //calculate the reaction time for the correct hit to happen
+            sumReactTime += elapsedTurnTime;
+            Serial.print("REACTTIME ");
+            
+
             break; //go to next turn immediately
           }
         }
+        //update the curr playtime and currclicks variables
+        Serial.print("CURRPLAYTIME ");
+        Serial.print(playTime*10); //playtime in ms
+        Serial.println();
+
+        Serial.print("CURRCLICKS ");
+        Serial.print(currNumPlayerClicks);
+        Serial.println();
+
         //catch if the player failed to hit the mole this time
         if(!hitSuccess){
           //print the fail statement to the serial monitor

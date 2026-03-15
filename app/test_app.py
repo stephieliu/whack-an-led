@@ -687,14 +687,14 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
 
                 #update current running game vars
                 self.current_vars[0].set(str(CURR_SCORE))
-                # self.current_vars[1].set(str(CURR_PLAYTIME))
                 self.current_vars[1].set('-' if CURR_MOLE_INT is None else str(CURR_MOLE_INT))
                 self.current_vars[2].set(str(CURR_FAIL_CNT)+' / 3')
-                # self.current_vars[4].set(str(CURR_CLICKS))
-                # if CURR_REACT_TIME is None:
-                #     self.current_vars[5].set('-')
-                # else:
-                #     self.current_vars[5].set(f'{CURR_REACT_TIME:.2f}')
+                self.current_vars[3].set(str(CURR_PLAYTIME))
+                self.current_vars[4].set(str(CURR_CLICKS))
+                if CURR_REACT_TIME is None:
+                    self.current_vars[5].set('-')
+                else:
+                    self.current_vars[5].set(f'{CURR_REACT_TIME:.2f}')
 
                 #update the text subtitle label with game status
                 self.startLabel.config(text='Wait for it...')
