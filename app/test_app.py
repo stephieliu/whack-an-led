@@ -112,9 +112,9 @@ HIT_FAIL = False # whether the hit failed
 #dynamic variable updates
 GAME_ON = False
 CURR_SCORE = 0
-CURR_CLICKS = 0
-CURR_PLAYTIME = 0
-CURR_REACT_TIME = 0
+# CURR_CLICKS = 0
+# CURR_PLAYTIME = 0
+# CURR_REACT_TIME = 0
 CURR_MOLE_INT = 0
 CURR_FAIL_CNT = 0
 
@@ -136,7 +136,7 @@ STAR1 = Image.open(star1_path) #initial icon
 STAR1 = STAR1.resize((50, 50))
 
 #set up the serial port to be read
-ser = serial.Serial('COM4', 115200, timeout=2)
+ser = serial.Serial('COM5', 115200, timeout=2)
 time.sleep(0.2) #wait for port to be opened
 
 #playerRoundStats class will hold variables for the current round
@@ -168,7 +168,7 @@ class ThreadedSerialReader:
             'ENDGAME',
             'STARTGAME',
             'MOLETURNSTART',
-            'PLAYERTURNSTART',
+            # 'PLAYERTURNSTART',
             'HITSUCCESS',
             'CURRSCORE',
             'CURRTIMEINT',
@@ -243,7 +243,7 @@ class ThreadedSerialReader:
         global HIT_FAIL, NEW_MOLE, BEST_REACT_TIME, BEST_SCORE, SHORTEST_MOLE_INT, FAIL_THRESHOLD, HIT_SUCCESS, TOTAL_CLICKS, LONGEST_PLAYTIME, GAME_ON, STARWINK
 
         #also global vars for current stats
-        global CURR_SCORE, CURR_CLICKS, CURR_PLAYTIME, CURR_REACT_TIME, CURR_MOLE_INT, CURR_FAIL_CNT
+        global CURR_SCORE, CURR_MOLE_INT, CURR_FAIL_CNT
 
         if not commandName in self.commandList:
             logger.debug('Command not in list.')
@@ -267,15 +267,15 @@ class ThreadedSerialReader:
             elif 'TOTALCLICKS' in commandName:
                 val = int(data.split(' ')[1]) #get the numerical value after (this is the string)
                 #update the total clicks variable
-                CURR_CLICKS = val
+                # CURR_CLICKS = val
 
                 #also update total clicks
                 TOTAL_CLICKS += val
                 logger.debug(f'Updated clicks count: {TOTAL_CLICKS}')
             elif 'TOTALPLAYTIME' in commandName:
-                val = int(data.split(' ')[1]) #get the numerical value after (this is the string)
+                val = int(data.split(' ')[1]) / 1000 #get the numerical value after (this is the string) in secs
                 #update the player score variable
-                CURR_PLAYTIME = val
+                # CURR_PLAYTIME = val
 
                 #also update best score if needed
                 if LONGEST_PLAYTIME < val:
@@ -284,7 +284,7 @@ class ThreadedSerialReader:
             elif 'AVGREACTTIME' in commandName:
                 val = float(data.split(' ')[1]) #get the numerical value after (this is the string)
                 #update the player score variable
-                CURR_REACT_TIME = val
+                # CURR_REACT_TIME = val
 
                 #also update best avg reaction time if needed
                 if BEST_REACT_TIME is None or BEST_REACT_TIME > val:
@@ -306,9 +306,9 @@ class ThreadedSerialReader:
 
                 #update the boolean trackers for turns
                 NEW_MOLE = True
-            elif 'PLAYERTURNSTART' in commandName:
-                #player's turn
-                logger.debug('Player should be ready to hit.')
+            # elif 'PLAYERTURNSTART' in commandName:
+            #     #player's turn
+            #     logger.debug('Player should be ready to hit.')
             elif 'HITSUCCESS' in commandName:
                 #reports that the player successfully hit the mole
                 logger.debug('Player successful hit!')
@@ -329,7 +329,7 @@ class ThreadedSerialReader:
 
                 CURR_SCORE = val #update the round score
             elif 'CURRTIMEINT' in commandName:
-                val = int(data.split(' ')[1])
+                val = int(data.split(' ')[1])*100
                 logger.debug(f'Player current time int: {val}')
 
                 CURR_MOLE_INT = val #update the time int variables
@@ -370,11 +370,11 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
         #vars for current round
         self.current_vars = [
             tk.StringVar(value='-'),    # score
-            tk.StringVar(value='-'),    # playtime
+            # tk.StringVar(value='-'),    # playtime
             tk.StringVar(value='-'),    # interval
             tk.StringVar(value='- / 3'),  # fails/threshold
-            tk.StringVar(value='-'),    # total clicks
-            tk.StringVar(value='-'),    # avg react time
+            # tk.StringVar(value='-'),    # total clicks
+            # tk.StringVar(value='-'),    # avg react time
         ]
 
         #create the displayed elements
@@ -460,11 +460,11 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
 
         current_labels = [
             'CURRENT SCORE:',
-            'CURRENT PLAYTIME (s):',
+            # 'CURRENT PLAYTIME (s):',
             'CURRENT TIME INTERVAL (ms):',
             'CURRENT FAILS:',
-            'CURRENT ROUND CLICKS:',
-            'AVERAGE REACTION TIME (ms):',
+            # 'CURRENT ROUND CLICKS:',
+            # 'AVERAGE REACTION TIME (ms):',
         ]
 
         for row in range(len(current_labels)):
@@ -488,13 +488,15 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
                 sticky='nsew',
             )
 
+            global CURR_FAIL_CNT, CURR_SCORE, CURR_MOLE_INT
+
             #dynamic variables to be updated w/ the actual score counters
             self.current_vars[0].set(CURR_SCORE)
-            self.current_vars[1].set(CURR_PLAYTIME)
-            self.current_vars[2].set(CURR_MOLE_INT)
-            self.current_vars[3].set(f'{CURR_FAIL_CNT} / 3')
-            self.current_vars[4].set(CURR_CLICKS)
-            self.current_vars[5].set(CURR_REACT_TIME)
+            # self.current_vars[1].set(CURR_PLAYTIME)
+            self.current_vars[1].set(CURR_MOLE_INT)
+            self.current_vars[2].set(f'{CURR_FAIL_CNT} / 3')
+            # self.current_vars[4].set(CURR_CLICKS)
+            # self.current_vars[5].set(CURR_REACT_TIME)
 
             statLabelSpace = tk.Label(
                 master=grid_frame,
@@ -548,6 +550,7 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
 
             #dynamic variables to be updated w/ the actual score counters
                 #in order: [best score, longest playtime, shortest led time int, best reaction time, total clicks recorded]
+            global BEST_SCORE, LONGEST_PLAYTIME, SHORTEST_MOLE_INT, BEST_REACT_TIME, TOTAL_CLICKS
             self.dynamicLabelsList[0].set(BEST_SCORE)
             self.dynamicLabelsList[1].set(LONGEST_PLAYTIME)
             self.dynamicLabelsList[2].set(SHORTEST_MOLE_INT)
@@ -559,7 +562,7 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
                 textvariable=self.dynamicLabelsList[row],
                 fg='black',
                 font=font.Font(size=10, family='Courier'),
-                width = 3,
+                width = 10,
                 # height = 2,
                 highlightbackground='lightblue',
             )
@@ -575,7 +578,7 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
     #executes every 50ms
     #purpose is to poll any changes in the game variables (from the continuously threading background serial monitor updates) and update the ui accordingly
     def _poll_ui(self):
-        global CURR_SCORE, CURR_CLICKS, CURR_PLAYTIME, CURR_REACT_TIME, CURR_MOLE_INT, CURR_FAIL_CNT, STAR1, STARWINK
+        global CURR_SCORE, CURR_MOLE_INT, CURR_FAIL_CNT, STAR1, STARWINK, BEST_REACT_TIME, BEST_SCORE, LONGEST_PLAYTIME, SHORTEST_MOLE_INT, TOTAL_CLICKS
 
         #check that background music is still playing
         if not self.backgroundMusic.is_alive():
@@ -606,14 +609,14 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
 
                 #update current running game vars
                 self.current_vars[0].set(str(CURR_SCORE))
-                self.current_vars[1].set(str(CURR_PLAYTIME))
-                self.current_vars[2].set('-' if CURR_MOLE_INT is None else str(CURR_MOLE_INT))
-                self.current_vars[3].set(str(CURR_FAIL_CNT)+' / 3')
-                self.current_vars[4].set(str(CURR_CLICKS))
-                if CURR_REACT_TIME is None:
-                    self.current_vars[5].set('-')
-                else:
-                    self.current_vars[5].set(f'{CURR_REACT_TIME:.2f}')
+                # self.current_vars[1].set(str(CURR_PLAYTIME))
+                self.current_vars[1].set('-' if CURR_MOLE_INT is None else str(CURR_MOLE_INT))
+                self.current_vars[2].set(str(CURR_FAIL_CNT)+' / 3')
+                # self.current_vars[4].set(str(CURR_CLICKS))
+                # if CURR_REACT_TIME is None:
+                #     self.current_vars[5].set('-')
+                # else:
+                #     self.current_vars[5].set(f'{CURR_REACT_TIME:.2f}')
 
                 #update the text subtitle label with game status
                 self.startLabel.config(text='Wait for it...')
@@ -634,17 +637,17 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
                 #also reset the curr round vars for the next round
                 reset_curr_vars = [
                     '-', #score
-                    '-', #playtime
+                    # '-', #playtime
                     '-', #interval
                     '- / 3', #fails/threshold
-                    '-', #total clicks
-                    '-', #avg react time
+                    # '-', #total clicks
+                    # '-', #avg react time
                 ]
 
                 CURR_SCORE = 0
-                CURR_CLICKS = 0
-                CURR_PLAYTIME = 0
-                CURR_REACT_TIME = 0
+                # CURR_CLICKS = 0
+                # CURR_PLAYTIME = 0
+                # CURR_REACT_TIME = 0
                 CURR_MOLE_INT = 0
                 CURR_FAIL_CNT = 0
 
