@@ -98,16 +98,16 @@ byte holeLED [4] = {hole1LEDPin, hole2LEDPin, hole3LEDPin, hole4LEDPin};
 //--------------------------------------------------------
 //timing events
 //--------------------------------------------------------
-volatile unsigned long count_hundred_ms = 0; //counts time in ms
-volatile unsigned long count_secs = 0; //counts time in s
+volatile uint32_t count_hundred_ms = 0; //counts time in ms
+volatile uint32_t count_secs = 0; //counts time in s
 //int buttonPressed_time = 0;
 
-volatile unsigned long count_star_wink = 0; //counts whether star should wink (resets every 500ms)
+volatile uint32_t count_star_wink = 0; //counts whether star should wink (resets every 500ms)
 volatile bool starWink = false; //start the star animation in initial image
 
 //volatile interrupt/timing-related variables
-volatile unsigned long numPlayerClicks = 0; //number of clicks done by user throughout the game
-volatile unsigned long lastTimeInterrupted = 0;
+volatile uint32_t numPlayerClicks = 0; //number of clicks done by user throughout the game
+volatile uint32_t lastTimeInterrupted = 0;
 
 //boolean flags to control the game status (start/end game)
 bool gameOn = false;
@@ -121,7 +121,7 @@ const int MOLE_TIME = 20; //start with 2s interval (20 * 100ms)
 const int LOW_MOLE_THRESHOLD = 2; //limit mole time to 200 ms as the lowest possible interval
 
 int moleTime = 0; //these timing values will change as the game progresses
-volatile unsigned long elapsedTurnTime = 0;
+volatile uint32_t elapsedTurnTime = 0;
 
 volatile bool playerTurn = false; //indicates whether it is time for player's turn
 
@@ -129,7 +129,7 @@ const int failThreshold = 3; //start with 3 fails allowed
 int failCount = 1; //start with 0 fails in the current game
 
 int playerScore = 0; //player score for the current game
-volatile unsigned long playTime = 0; //how long the game is lasting
+volatile uint32_t playTime = 0; //how long the game is lasting
 double avgReactionTime = 0; //how long the player takes to react to the mole on average
 
 //program initialization
@@ -160,6 +160,10 @@ void setup() {
   
   sei(); //set interrupt global flag (reenable interrupts after initializing timer)
 
+  //attach interrupt to pin2, which will trigger on any button click
+  //buttons are input_pullup, so they start HIGH and go LOW on click
+  attachInterrupt(digitalPinToInterrupt(buttonIntPin), clickCounter, FALLING);
+
   //handle other initializations
   initComponents();
   initGame();
@@ -175,15 +179,12 @@ void initComponents(){
   //start button pin
   pinMode(startButtonPin, INPUT_PULLUP);
   //AND button pin
-  // pinMode(buttonIntPin, INPUT_PULLUP);
+  pinMode(buttonIntPin, INPUT_PULLUP);
   //hole button pins
   pinMode(hole1ButtonPin, INPUT_PULLUP);
   pinMode(hole2ButtonPin, INPUT_PULLUP);
   pinMode(hole3ButtonPin, INPUT_PULLUP);
   pinMode(hole4ButtonPin, INPUT_PULLUP);
-  //attach interrupt to pin2, which will trigger on any button click
-  //buttons are input_pullup, so they start HIGH and go LOW on click
-  attachInterrupt(digitalPinToInterrupt(buttonIntPin), clickCounter, FALLING);
 
   //set led pins to output
   //status led pins
@@ -253,12 +254,12 @@ void resetGame(){
   Serial.println();
   
   //report player's statistics
-  // noInterrupts();
+  noInterrupts();
   Serial.print("TOTALCLICKS ");
   Serial.print(numPlayerClicks);
   // Serial.print(" times!");
   Serial.println();
-  // interrupts();
+  interrupts();
   
   //report the total play time (player's turn duration) in ms
   Serial.print("TOTALPLAYTIME ");
@@ -311,8 +312,9 @@ ISR(TIMER1_OVF_vect) {
 //interrupt function
 //this will keep a counter of the total clicks done by the user
 void clickCounter(){
-  if(playerTurn && ((lastTimeInterrupted==0) || (count_hundred_ms > lastTimeInterrupted+2))){
-    lastTimeInterrupted = count_hundred_ms;
+  uint32_t curr_ticks = count_hundred_ms;
+  if(playerTurn && ((lastTimeInterrupted==0) || (curr_ticks - lastTimeInterrupted >= 2))){
+    lastTimeInterrupted = curr_ticks;
     numPlayerClicks++;
   }
 }
