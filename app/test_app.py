@@ -113,9 +113,9 @@ HIT_FAIL = False # whether the hit failed
 GAME_ON = False
 FIRST_ROUND = False
 CURR_SCORE = 0
-# CURR_CLICKS = 0
-# CURR_PLAYTIME = 0
-# CURR_REACT_TIME = 0
+CURR_CLICKS = 0
+CURR_PLAYTIME = 0
+CURR_REACT_TIME = 0
 CURR_MOLE_INT = 0
 CURR_FAIL_CNT = 0
 
@@ -146,7 +146,7 @@ ARCADE_NEON_YELLOW = "#f9c80e"
 ARCADE_TEXT = "#f2f2f2"
 
 #set up the serial port to be read
-ser = serial.Serial('COM5', 115200, timeout=2)
+ser = serial.Serial('COM4', 115200, timeout=2)
 time.sleep(0.2) #wait for port to be opened
 
 #playerRoundStats class will hold variables for the current round
@@ -183,6 +183,9 @@ class ThreadedSerialReader:
             'HITSUCCESS',
             'CURRSCORE',
             'CURRTIMEINT',
+            'CURRCLICKS',
+            'CURRPLAYTIME',
+            'REACTTIME',
             'HITFAIL',
             'CURRFAILCNT',
             'EXCEEDFAIL',
@@ -255,6 +258,8 @@ class ThreadedSerialReader:
 
         #also global vars for current stats
         global CURR_SCORE, CURR_MOLE_INT, CURR_FAIL_CNT
+
+        global CURR_CLICKS, CURR_PLAYTIME, CURR_REACT_TIME
 
         if not commandName in self.commandList:
             logger.debug('Command not in list.')
@@ -340,6 +345,21 @@ class ThreadedSerialReader:
                 logger.debug(f'Player current score: {val}')
 
                 CURR_SCORE = val #update the round score
+            elif 'CURRCLICKS' in commandName:
+                val = int(data.split(' ')[1])
+                logger.debug(f'Player current clicks: {val}')
+
+                CURR_CLICKS = val #update the round score
+            elif 'CURRPLAYTIME' in commandName:
+                val = int(data.split(' ')[1]) / 1000
+                logger.debug(f'Player current playtime in s: {val}')
+
+                CURR_PLAYTIME = val #update the round score
+            elif 'REACTTIME' in commandName:
+                val = int(data.split(' ')[1])*100 #convert to ms
+                logger.debug(f'Player last reaction time in ms: {val}')
+
+                CURR_REACT_TIME = val #update the round score
             elif 'CURRTIMEINT' in commandName:
                 val = int(data.split(' ')[1])*100
                 logger.debug(f'Player current time int: {val}')
@@ -371,7 +391,7 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
     def __init__(self):
         super().__init__()
         self.title('Whack an LED!')
-        self.geometry('850x530') #set initial size of the display window
+        self.geometry('850x580') #set initial size of the display window
         self._cells = {} #dictionary for mapping cells to row/col on grid
 
         self.dynamicLabelsList = [
@@ -386,12 +406,12 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
 
         #vars for current round
         self.current_vars = [
-            tk.StringVar(value='-'),    # score
-            # tk.StringVar(value='-'),    # playtime
-            tk.StringVar(value='-'),    # interval
-            tk.StringVar(value='- / 3'),  # fails/threshold
-            # tk.StringVar(value='-'),    # total clicks
-            # tk.StringVar(value='-'),    # avg react time
+            tk.StringVar(value='-'),    #score
+            tk.StringVar(value='-'),    #interval
+            tk.StringVar(value='- / 3'),  #fails/threshold
+            tk.StringVar(value='-'),    #playtime
+            tk.StringVar(value='-'),    #current clicks
+            tk.StringVar(value='-'),    #avg react time
         ]
 
         #create the displayed elements
@@ -511,61 +531,102 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
 
         current_labels = [
             'CURRENT SCORE:',
-            # 'CURRENT PLAYTIME (s):',
             'CURRENT TIME INTERVAL (ms):',
             'CURRENT FAILS:',
-            # 'CURRENT ROUND CLICKS:',
-            # 'AVERAGE REACTION TIME (ms):',
+            'CURRENT PLAYTIME (s):',
+            'CURRENT ROUND CLICKS:',
+            'LAST REACTION TIME (ms):',
         ]
 
         for i, label in enumerate(current_labels):
-            statLabelSpace = tk.Label(
-                master=title_frame,
-                text=label,
-                font=self.arcadeSmallFont,
-                fg=ARCADE_TEXT,
-                bg=ARCADE_PANEL,
-                # width = 30,
-                # height = 2,
-                # highlightbackground='lightblue',
-            )
-            # self._cells[statLabelSpace] = (row+1, 0)
-            statLabelSpace.grid(
-                row=i+1,
-                column=0,
-                padx=10,
-                pady=8,
-                sticky='e',
-            )
+            if i == len(current_labels)-1:
+                statLabelSpace = tk.Label(
+                    master=title_frame,
+                    text=label,
+                    font=self.arcadeSmallFont,
+                    fg=ARCADE_TEXT,
+                    bg=ARCADE_PANEL,
+                    # width = 30,
+                    # height = 2,
+                    # highlightbackground='lightblue',
+                )
+                # self._cells[statLabelSpace] = (row+1, 0)
+                statLabelSpace.grid(
+                    row=i+1,
+                    column=0,
+                    padx=10,
+                    pady=(8, 20),
+                    sticky='e',
+                )
+            else:
+                statLabelSpace = tk.Label(
+                    master=title_frame,
+                    text=label,
+                    font=self.arcadeSmallFont,
+                    fg=ARCADE_TEXT,
+                    bg=ARCADE_PANEL,
+                    # width = 30,
+                    # height = 2,
+                    # highlightbackground='lightblue',
+                )
+                # self._cells[statLabelSpace] = (row+1, 0)
+                statLabelSpace.grid(
+                    row=i+1,
+                    column=0,
+                    padx=10,
+                    pady=8,
+                    sticky='e',
+                )
 
             global CURR_FAIL_CNT, CURR_SCORE, CURR_MOLE_INT
+            global CURR_PLAYTIME, CURR_CLICKS, CURR_REACT_TIME
 
             #dynamic variables to be updated w/ the actual score counters
             self.current_vars[0].set(CURR_SCORE)
-            # self.current_vars[1].set(CURR_PLAYTIME)
             self.current_vars[1].set(CURR_MOLE_INT)
             self.current_vars[2].set(f'{CURR_FAIL_CNT} / 3')
-            # self.current_vars[4].set(CURR_CLICKS)
-            # self.current_vars[5].set(CURR_REACT_TIME)
+            self.current_vars[3].set(CURR_PLAYTIME)
+            self.current_vars[4].set(CURR_CLICKS)
+            self.current_vars[5].set(CURR_REACT_TIME)
 
-            statLabelSpace = tk.Label(
-                master=title_frame,
-                textvariable=self.current_vars[i],
-                fg=ARCADE_NEON_PURPLE,
-                font=self.arcadeSmallFont,
-                bg=ARCADE_PANEL,
-                # width = 10,
-                # height = 2,
-                # highlightbackground='lightblue',
-            )
-            # self._cells[statLabelSpace] = (row+1, 0)
-            statLabelSpace.grid(
-                row=i+1,
-                column=1,
-                padx=10,
-                pady=8,
-                sticky='w',
-            )
+            if i == len(self.current_vars)-1:
+                statLabelSpace = tk.Label(
+                    master=title_frame,
+                    textvariable=self.current_vars[i],
+                    fg=ARCADE_NEON_PURPLE,
+                    font=self.arcadeSmallFont,
+                    bg=ARCADE_PANEL,
+                    # width = 10,
+                    # height = 2,
+                    # highlightbackground='lightblue',
+                )
+                # self._cells[statLabelSpace] = (row+1, 0)
+                statLabelSpace.grid(
+                    row=i+1,
+                    column=1,
+                    padx=10,
+                    pady=(8, 20),
+                    sticky='w',
+                )
+            else:
+                statLabelSpace = tk.Label(
+                    master=title_frame,
+                    textvariable=self.current_vars[i],
+                    fg=ARCADE_NEON_PURPLE,
+                    font=self.arcadeSmallFont,
+                    bg=ARCADE_PANEL,
+                    # width = 10,
+                    # height = 2,
+                    # highlightbackground='lightblue',
+                )
+                # self._cells[statLabelSpace] = (row+1, 0)
+                statLabelSpace.grid(
+                    row=i+1,
+                    column=1,
+                    padx=10,
+                    pady=8,
+                    sticky='w',
+                )
             logger.debug(f'currlabel row {i}')
 
         #best scores
@@ -633,6 +694,8 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
     def _poll_ui(self):
         global CURR_SCORE, CURR_MOLE_INT, CURR_FAIL_CNT, STAR1, STARWINK, BEST_REACT_TIME, BEST_SCORE, LONGEST_PLAYTIME, SHORTEST_MOLE_INT, TOTAL_CLICKS, FIRST_ROUND
 
+        global CURR_PLAYTIME, CURR_CLICKS, CURR_REACT_TIME
+
         #check that background music is still playing
         if not self.backgroundMusic.is_alive():
             self.backgroundMusic = playsound(background_music_path, block=False)
@@ -666,11 +729,11 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
                     #also reset the curr round vars for the next round
                     reset_curr_vars = [
                         '-', #score
-                        # '-', #playtime
                         '-', #interval
                         '- / 3', #fails/threshold
-                        # '-', #total clicks
-                        # '-', #avg react time
+                        '-', #playtime
+                        '-', #total clicks
+                        '-', #avg react time
                     ]
 
                     # CURR_SCORE = 0
@@ -694,7 +757,7 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
                 if CURR_REACT_TIME is None:
                     self.current_vars[5].set('-')
                 else:
-                    self.current_vars[5].set(f'{CURR_REACT_TIME:.2f}')
+                    self.current_vars[5].set(f'{CURR_REACT_TIME:.1f}')
 
                 #update the text subtitle label with game status
                 self.startLabel.config(text='Wait for it...')
@@ -728,9 +791,9 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
                 # ]
 
                 CURR_SCORE = 0
-                # CURR_CLICKS = 0
-                # CURR_PLAYTIME = 0
-                # CURR_REACT_TIME = 0
+                CURR_CLICKS = 0
+                CURR_PLAYTIME = 0
+                CURR_REACT_TIME = 0
                 CURR_MOLE_INT = 0
                 CURR_FAIL_CNT = 0
 

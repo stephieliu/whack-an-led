@@ -124,6 +124,7 @@ const int LOW_MOLE_THRESHOLD = 2; //limit mole time to 200 ms as the lowest poss
 
 int moleTime = 0; //these timing values will change as the game progresses
 volatile uint32_t elapsedTurnTime = 0;
+uint32_t sumReactTime = 0; //for calculating the average reaction time later
 
 volatile bool playerTurn = false; //indicates whether it is time for player's turn
 
@@ -219,6 +220,7 @@ void initGame(){
   playerTurn = false;
   playerScore = 0; //player score for the current game
   avgReactionTime = 0;
+  sumReactTime = 0;
 
   // numPlayerClicks = 0;
   currNumPlayerClicks = 0; //reset the current click counter
@@ -274,9 +276,9 @@ void resetGame(){
   Serial.print(moleTime*100);
   Serial.println();
 
-  //calculate average reaction time
+  //calculate average reaction time in ms
   if(playerScore > 0){
-	  avgReactionTime = (playTime*10)/playerScore;
+	  avgReactionTime = (sumReactTime*100)/playerScore;
   }
   
   Serial.print("AVGREACTTIME ");
@@ -307,7 +309,7 @@ ISR(TIMER1_OVF_vect) {
   }
   
   if(playerTurn){
-    playTime ++; //counts the player's turn duration TOTAL in ms
+    playTime ++; //counts the player's turn duration TOTAL in 10s of ms
   }
 
   if(count_hundred_ms % 5 == 0){
@@ -464,9 +466,12 @@ void loop() {
             Serial.println();
 
             //calculate the reaction time for the correct hit to happen
+            noInterrupts();
             sumReactTime += elapsedTurnTime;
             Serial.print("REACTTIME ");
-            
+            Serial.print(elapsedTurnTime);
+            Serial.println();
+            interrupts();
 
             break; //go to next turn immediately
           }
