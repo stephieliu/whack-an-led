@@ -106,6 +106,7 @@ SHORTEST_MOLE_INT = None
 BEST_REACT_TIME = None
 TOTAL_CLICKS = 0
 NEW_MOLE = False #tracks whether the mole is here to be hit
+FIRST_NEW_MOLE = False #whether the mole has JUST popped up
 HIT_SUCCESS = False #whether the hit was successful
 HIT_FAIL = False # whether the hit failed
 
@@ -128,6 +129,7 @@ background_music_path = 'sounds/djartmusic-best-game-console-301284.mp3'
 startgame_music_path = 'sounds/freesound_community-game-start-6104.mp3'
 success_music_path = 'sounds/freesound_community-retro-video-game-coin-pickup-38299.mp3'
 fail_music_path = 'sounds/universfield-retro-game-shot-2-152053.mp3'
+led_lit_sound_path = 'sounds/dogwolf123-retro-blip-sound-01-474774.mp3'
 
 #initialize images and resize for the ui display
 star1_path = 'graphics/star_1.png'
@@ -259,7 +261,7 @@ class ThreadedSerialReader:
         #also global vars for current stats
         global CURR_SCORE, CURR_MOLE_INT, CURR_FAIL_CNT
 
-        global CURR_CLICKS, CURR_PLAYTIME, CURR_REACT_TIME
+        global CURR_CLICKS, CURR_PLAYTIME, CURR_REACT_TIME, FIRST_NEW_MOLE
 
         if not commandName in self.commandList:
             logger.debug('Command not in list.')
@@ -323,6 +325,7 @@ class ThreadedSerialReader:
 
                 #update the boolean trackers for turns
                 NEW_MOLE = True
+                FIRST_NEW_MOLE = True
             # elif 'PLAYERTURNSTART' in commandName:
             #     #player's turn
             #     logger.debug('Player should be ready to hit.')
@@ -696,6 +699,8 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
 
         global CURR_PLAYTIME, CURR_CLICKS, CURR_REACT_TIME
 
+        global NEW_MOLE, FIRST_NEW_MOLE
+
         #check that background music is still playing
         if not self.backgroundMusic.is_alive():
             self.backgroundMusic = playsound(background_music_path, block=False)
@@ -763,6 +768,10 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
                 self.startLabel.config(text='Wait for it...')
                 if NEW_MOLE:
                     self.startLabel.config(text='Quick, hit the LED!')
+                    if FIRST_NEW_MOLE:
+                        #play sound effect
+                        led_lit_sound = playsound(led_lit_sound_path, block=False)
+                        FIRST_NEW_MOLE = False #reset the first new mole flag so the sound only plays when led JUST pops up
             else:
                 logger.debug('Update best stats variables.')
                 #update ending game vars
