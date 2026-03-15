@@ -111,6 +111,7 @@ HIT_FAIL = False # whether the hit failed
 
 #dynamic variable updates
 GAME_ON = False
+FIRST_ROUND = False
 CURR_SCORE = 0
 # CURR_CLICKS = 0
 # CURR_PLAYTIME = 0
@@ -173,6 +174,7 @@ class ThreadedSerialReader:
             'PLAYERSCORE',
             'TOTALCLICKS',
             'TOTALPLAYTIME',
+            'FINALMOLEINT',
             'AVGREACTTIME',
             'ENDGAME',
             'STARTGAME',
@@ -249,7 +251,7 @@ class ThreadedSerialReader:
         commandName = data.split(' ')[0] #this separates the actual command from the data value if it exists (eg. PLAYERSCORE [playerscore])
 
         #set global vars
-        global HIT_FAIL, NEW_MOLE, BEST_REACT_TIME, BEST_SCORE, SHORTEST_MOLE_INT, FAIL_THRESHOLD, HIT_SUCCESS, TOTAL_CLICKS, LONGEST_PLAYTIME, GAME_ON, STARWINK
+        global HIT_FAIL, NEW_MOLE, BEST_REACT_TIME, BEST_SCORE, SHORTEST_MOLE_INT, FAIL_THRESHOLD, HIT_SUCCESS, TOTAL_CLICKS, LONGEST_PLAYTIME, GAME_ON, FIRST_ROUND, STARWINK
 
         #also global vars for current stats
         global CURR_SCORE, CURR_MOLE_INT, CURR_FAIL_CNT
@@ -302,6 +304,7 @@ class ThreadedSerialReader:
             elif 'STARTGAME' in commandName:
                 #this means the player has hit the blue start button
                 GAME_ON = True
+                FIRST_ROUND = True
 
                 logger.debug('Started game, blue button clicked.')
 
@@ -342,6 +345,9 @@ class ThreadedSerialReader:
                 logger.debug(f'Player current time int: {val}')
 
                 CURR_MOLE_INT = val #update the time int variables
+            elif 'FINALMOLEINT' in commandName:
+                val = int(data.split(' ')[1])
+                logger.debug(f'Player shortest time int: {val}')
 
                 #check if update for overall shortest interval is needed
                 if SHORTEST_MOLE_INT is None or val < SHORTEST_MOLE_INT:
@@ -655,6 +661,30 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
             if GAME_ON:
                 logger.debug('Update current game variables.')
 
+                if FIRST_ROUND:
+                    logger.debug("first game starts. reset game vars display.")
+                    #also reset the curr round vars for the next round
+                    reset_curr_vars = [
+                        '-', #score
+                        # '-', #playtime
+                        '-', #interval
+                        '- / 3', #fails/threshold
+                        # '-', #total clicks
+                        # '-', #avg react time
+                    ]
+
+                    # CURR_SCORE = 0
+                    # # CURR_CLICKS = 0
+                    # # CURR_PLAYTIME = 0
+                    # # CURR_REACT_TIME = 0
+                    # CURR_MOLE_INT = 0
+                    # CURR_FAIL_CNT = 0
+
+                    for i in range(len(reset_curr_vars)):
+                        self.current_vars[i].set(reset_curr_vars[i])
+
+                    FIRST_ROUND = False #reset the firstround var
+
                 #update current running game vars
                 self.current_vars[0].set(str(CURR_SCORE))
                 # self.current_vars[1].set(str(CURR_PLAYTIME))
@@ -676,21 +706,23 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
                 self.dynamicLabelsList[0].set(str(BEST_SCORE))
                 self.dynamicLabelsList[1].set(str(LONGEST_PLAYTIME))
                 self.dynamicLabelsList[2].set('-' if SHORTEST_MOLE_INT is None else str(SHORTEST_MOLE_INT))
+
                 if BEST_REACT_TIME is None:
                     self.dynamicLabelsList[3].set('-')
                 else:
                     self.dynamicLabelsList[3].set(f'{BEST_REACT_TIME:.2f}')
+
                 self.dynamicLabelsList[4].set(str(TOTAL_CLICKS))
 
                 #also reset the curr round vars for the next round
-                reset_curr_vars = [
-                    '-', #score
-                    # '-', #playtime
-                    '-', #interval
-                    '- / 3', #fails/threshold
-                    # '-', #total clicks
-                    # '-', #avg react time
-                ]
+                # reset_curr_vars = [
+                #     '-', #score
+                #     # '-', #playtime
+                #     '-', #interval
+                #     '- / 3', #fails/threshold
+                #     # '-', #total clicks
+                #     # '-', #avg react time
+                # ]
 
                 CURR_SCORE = 0
                 # CURR_CLICKS = 0
@@ -699,8 +731,8 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
                 CURR_MOLE_INT = 0
                 CURR_FAIL_CNT = 0
 
-                for i in range(len(reset_curr_vars)):
-                    self.current_vars[i].set(reset_curr_vars[i])
+                # for i in range(len(reset_curr_vars)):
+                #     self.current_vars[i].set(reset_curr_vars[i])
                 
                 self.startLabel.config(text='Press the blue button to start the game!')
 

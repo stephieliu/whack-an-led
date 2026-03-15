@@ -266,6 +266,11 @@ void resetGame(){
   Serial.print(playTime*100);
   Serial.println();
 
+  //report the time interval reached (player's turn duration) in ms
+  Serial.print("FINALMOLEINT ");
+  Serial.print(moleTime*100);
+  Serial.println();
+
   //calculate average reaction time
   if(playerScore > 0){
 	  avgReactionTime = (playTime*100)/playerScore;
