@@ -151,8 +151,8 @@ void setup() {
 
   //this is the timer/counter register, holding the timer's value in counts
   //for timer1, there are 16 bits --> can hold up to 2^16 = 65535
-  TCNT1 = 63035;//preload timer to 40535
-    //the purpose of doing the timer preload is so that there will be a defined number of counts until overflow for each clock cycle --> 65535 - 40535 = 25000 'ticks'
+  TCNT1 = 63035;//preload timer to 63035
+    //the purpose of doing the timer preload is so that there will be a defined number of counts until overflow for each clock cycle --> 65535 - 63035 = 2500 'ticks'
     //the arduino frequency is 16MHz = 1 tick every 62.5us
     //but because of the prescaler, the new frequency is 0.25MHz = 1 tick every 4000ns = 4 us
     //so with this preload, 2500 * 4us = 10000 us = 10ms --> approx. 10 ms per clock cycle
@@ -162,6 +162,12 @@ void setup() {
     //write TOIE1 = 1 to enable overflow interrupt
   
   sei(); //set interrupt global flag (reenable interrupts after initializing timer)
+
+  //if analog input pin 0 is unconnected, random analog
+  //noise will cause the call to randomSeed() to generate
+  //different seed numbers each time the sketch runs
+  //randomSeed() will then shuffle the random function.
+  randomSeed(analogRead(0));
 
   //attach interrupt to pin2, which will trigger on any button click
   //buttons are input_pullup, so they start HIGH and go LOW on click
@@ -253,18 +259,20 @@ void resetGame(){
   gameOn = false;
   endGame = false;
 
+  noInterrupts();
+
   //report player's score
   Serial.print("PLAYERSCORE ");
   Serial.print(playerScore);
   Serial.println();
   
   //report player's statistics
-  noInterrupts();
+  // noInterrupts();
   Serial.print("TOTALCLICKS ");
   Serial.print(numPlayerClicks);
   // Serial.print(" times!");
   Serial.println();
-  interrupts();
+  // interrupts();
   
   //report the total play time (player's turn duration) in ms
   Serial.print("TOTALPLAYTIME ");
@@ -284,6 +292,8 @@ void resetGame(){
   Serial.print("AVGREACTTIME ");
   Serial.print(avgReactionTime);
   Serial.println();
+
+  interrupts();
 
   //turn off mole hole leds
   //run resets for all variable
@@ -327,7 +337,7 @@ ISR(TIMER1_OVF_vect) {
 //this will keep a counter of the total clicks done by the user
 void clickCounter(){
   uint32_t curr_ticks = count_ms;
-  if(playerTurn && ((lastTimeInterrupted==0) || (curr_ticks - lastTimeInterrupted >= 70))){
+  if(playerTurn && ((lastTimeInterrupted==0) || (curr_ticks - lastTimeInterrupted >= 20))){
     lastTimeInterrupted = curr_ticks;
     numPlayerClicks++;
     currNumPlayerClicks++;

@@ -148,7 +148,7 @@ ARCADE_NEON_YELLOW = "#f9c80e"
 ARCADE_TEXT = "#f2f2f2"
 
 #set up the serial port to be read
-ser = serial.Serial('COM4', 115200, timeout=2)
+ser = serial.Serial('COM5', 115200, timeout=2)
 time.sleep(0.2) #wait for port to be opened
 
 #playerRoundStats class will hold variables for the current round
@@ -429,7 +429,7 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
         #start playing the background music
         self.backgroundMusic = playsound(background_music_path, block=False)
 
-        self.after(50, self._poll_ui) #polls updates every 50 ms
+        self.after(20, self._poll_ui) #polls updates every 50 ms
 
     def createUserDisplay(self):
         #fonts for styling
@@ -637,7 +637,7 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
             'BEST SCORE:',
             'LONGEST PLAYTIME (s):',
             'SHORTEST TIME INTERVAL (ms):',
-            'BEST REACTION TIME (ms):',
+            'AVG REACTION TIME (ms):',
             'TOTAL CLICKS RECORDED:',
         ]
 
@@ -809,11 +809,11 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
                 # for i in range(len(reset_curr_vars)):
                 #     self.current_vars[i].set(reset_curr_vars[i])
                 
-                self.startLabel.config(text='Press the blue button to start the game!')
+                self.startLabel.config(text='Press the yellow button to start the game!')
 
         finally:
             #schedule next poll
-            self.after(50, self._poll_ui)
+            self.after(20, self._poll_ui)
     
 def main():
     #create the display and run mainloop
