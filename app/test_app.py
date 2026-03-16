@@ -386,8 +386,9 @@ class ThreadedSerialReader:
             elif 'PLAYERTURNEND' in commandName:
                 logger.debug('Player turn over.')
             elif 'STARWINK' in commandName:
-                logger.debug('wink the star icon.')
+                # logger.debug('wink the star icon.')
                 STARWINK = not STARWINK #toggles the icon back and forth
+        self.clear_data()
 
 #class for the main app frame
 class userDisplay(tk.Tk): #inherit Tk --> full gui window
@@ -727,7 +728,7 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
         #read global vals and update ui
         try:
             if GAME_ON:
-                logger.debug('Update current game variables.')
+                # logger.debug('Update current game variables.')
 
                 if FIRST_ROUND:
                     logger.debug("first game starts. reset game vars display.")
@@ -773,7 +774,7 @@ class userDisplay(tk.Tk): #inherit Tk --> full gui window
                         led_lit_sound = playsound(led_lit_sound_path, block=False)
                         FIRST_NEW_MOLE = False #reset the first new mole flag so the sound only plays when led JUST pops up
             else:
-                logger.debug('Update best stats variables.')
+                # logger.debug('Update best stats variables.')
                 #update ending game vars
                 if not CURR_FAIL_CNT == 0:
                     self.current_vars[2].set('3 / 3')
